@@ -1,3 +1,3 @@
 # os-ex2
 stupid c++ OS excersice
-#fkfkfkfkf
+# upload your files biiiiitch!!!
