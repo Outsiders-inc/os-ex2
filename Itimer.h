@@ -16,6 +16,7 @@
 class Itimer{
 public:
 Itimer(int quanta, void (*func)(int));
+void set();
 };
 
 #endif /* ITIMER_H_ */
