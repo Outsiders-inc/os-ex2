@@ -8,7 +8,7 @@
 #include "PriorityQueue.h"
 
 PriorityQueue::PriorityQueue() :
-		_size(0), _Red(), _Orange(), _Green(), _Blocked()
+		_size(0), _Red(), _Orange(), _Green(), _Blocked(),_helpPtr()
 {
 }
 
@@ -53,20 +53,19 @@ Thread * PriorityQueue::popElement()
  */
 Thread * PriorityQueue::getThread(int id)
 {
-	int location = -1;
-	vector<Thread *> * point = findInQueue(id, location);
+	int location = findElement(id);
 	if (location == -1)
 	{
-		location = findElement(id, _Blocked);
+		location = findInQueue(id, _Blocked);
 		if (location != -1)
 		{
-			point = &_Blocked;
+			_helpPtr = &_Blocked;
 		}
 
 	}
 	if (location != -1)
 	{
-		return point->at(location);
+		return _helpPtr->at(location);
 	}
 	return NULL;
 }
@@ -119,7 +118,7 @@ void PriorityQueue::decreaseSize()
 /**
  *
  */
-int PriorityQueue::findElement(int id, vector<Thread *> vec)
+int PriorityQueue::findInQueue(int id, vector<Thread *> vec)
 {
 	for (unsigned int i = 0; i < vec.size(); ++i)
 	{
@@ -136,46 +135,50 @@ int PriorityQueue::findElement(int id, vector<Thread *> vec)
  */
 int PriorityQueue::isBlocked(int id)
 {
-	return findElement(id, _Blocked);
+	return findInQueue(id, _Blocked);
 }
 /**
  *
  */
 void PriorityQueue::removeElement(int id)
 {
-	Thread * toDel = getThread(id);
+	int location = findElement(id);
+	if(location != -1)
+	{
+		_helpPtr->erase(_helpPtr->begin() + location);
+	}
 }
 /**
  * Returns a pointer to queue in which the given id can be found.
  * Inserts into location the location in the queue.
  */
-vector<Thread *> * PriorityQueue::findInQueue(int id, int &location)
+int PriorityQueue::findElement(int id)
 {
-	vector<Thread *> * point = NULL;
-	int loc = findElement(id, _Red);
+	_helpPtr = NULL;
+	int loc = findInQueue(id, _Red);
 	if (loc != -1)
 	{
-		point = &_Red;
+		_helpPtr = &_Red;
 	}
 	else
 	{
-		loc = findElement(id, _Orange);
+		loc = findInQueue(id, _Orange);
 		if (loc != -1)
 
 		{
-			point = &_Orange;
+			_helpPtr = &_Orange;
 		}
 		else
 		{
-			loc = findElement(id, _Green);
+			loc = findInQueue(id, _Green);
 			if (loc != -1)
 			{
-				point = &_Green;
+				_helpPtr = &_Green;
 			}
 		}
 	}
-	location = loc;
-	return point;
+
+	return loc;
 }
 /**
  * Moves thread with given id to blocked list.
@@ -183,12 +186,11 @@ vector<Thread *> * PriorityQueue::findInQueue(int id, int &location)
  */
 void PriorityQueue::block(int id)
 {
-	int location = -1;
-	vector<Thread *> * point = findInQueue(id, location);
+	int location = findElement(id);
 	if (location != -1)
 	{
-		_Blocked.push_back(point->at(location));
-		point->erase(point->begin() + location);
+		_Blocked.push_back(_helpPtr->at(location));
+		_helpPtr->erase(_helpPtr->begin() + location);
 	}
 }
 /**
