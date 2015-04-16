@@ -31,8 +31,15 @@ PriorityQueue* threads;
 Itimer * timer;
 IdHandler * gHandler;
 sigset_t gSigSet;
+
+/**
+ * A method which handles the events that take place at the end of each time-quanta.
+ */
 void timer_handler(int sig)
 {
+	// Must pause the timer before starting this method - and resume it upon exiting this metod
+	// ........enter code here......//
+	
 	// If the running process has no "competition" over CPU time.
 	if (threads->isQueueEmpty()) // MAKE SURE TO WRITE "isQueueEMpty()" method
 	{
