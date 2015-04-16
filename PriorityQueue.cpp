@@ -207,3 +207,10 @@ void PriorityQueue::resume(int id)
 		_Blocked.erase(_Blocked.begin() + location);
 	}
 }
+/**
+ * Returns 0 iff all queues except blocked are empty.
+*/
+int isQueueEmpty()
+{
+	return _Red.size() + _Green.size() + _Orange.size();		
+}
