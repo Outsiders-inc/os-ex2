@@ -23,6 +23,7 @@ public:
 	Thread * popElement();
 	int get_quantums(int tid);
 	int enqueueElement(Thread* toAdd);
+	//__________________________to erase all size matters
 	int getSize();
 	void increaseSize();
 	void decreaseSize();
