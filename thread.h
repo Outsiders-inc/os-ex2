@@ -9,13 +9,12 @@
 #define THREAD_H_
 
 #include "uthreads.h"
-typedef void (*fptr)(void);
 enum State {RUNNING, READY, BLOCKED};
 
 class Thread
 {
 public:
-	Thread(int tId, Priority priority, fptr f);
+	Thread(int tId, Priority priority);
 	virtual ~Thread();
 	int getNumOfQuantums();
 	void increaseQuantums();
@@ -28,7 +27,6 @@ public:
 private:
 	int _id;
 	Priority _priority;
-	fptr _func;
 	int _numOfQuantums;
 	State _state;
 };
