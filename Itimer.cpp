@@ -22,7 +22,11 @@ Itimer::Itimer(int quanta , void (*func)(int) )
 }
 void Itimer::set()
 {
-	setitimer(ITIMER_VIRTUAL, &tv, NULL);
+	if(setitimer(ITIMER_VIRTUAL, &tv, NULL)==-1)
+	{
+		//error
+		exit(1);
+	};
 }
 //int main(void)
 //{
