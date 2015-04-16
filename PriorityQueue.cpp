@@ -51,7 +51,7 @@ Thread * PriorityQueue::popElement()
 /**
  *
  */
-Thread * PriorityQueue::getThread(int id)
+int PriorityQueue::get_quantums(int id)
 {
 	int location = findElement(id);
 	if (location == -1)
@@ -65,9 +65,9 @@ Thread * PriorityQueue::getThread(int id)
 	}
 	if (location != -1)
 	{
-		return _helpPtr->at(location);
+		return _helpPtr->at(location)->getNumOfQuantums();
 	}
-	return NULL;
+	return -1;
 }
 
 /**
