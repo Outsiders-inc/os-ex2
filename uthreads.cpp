@@ -178,5 +178,5 @@ int uthread_get_total_quantums()
 /* Get the number of thread quantums */
 int uthread_get_quantums(int tid)
 {
-	return threads->;
+	return threads->get_quantums(tid);
 }
