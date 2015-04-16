@@ -31,6 +31,7 @@ public:
 	void block(int id);
 	void resume(int id);
 	int isBlocked(int id);
+	int isQueueEmpty();
 private:
 	int findElement(int id);
 	int findInQueue(int id, vector<Thread*>);
