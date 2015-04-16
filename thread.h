@@ -21,7 +21,6 @@ public:
 	int getId();
 	Priority getPriority();
 	void changeState(State newState);
-	fptr  getFunction();
 
 //	Thread(Thread toCopy);
 private:
