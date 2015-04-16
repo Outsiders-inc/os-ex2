@@ -20,7 +20,7 @@ public:
 	PriorityQueue();
 	virtual ~PriorityQueue();
 	Thread * popElement();
-	Thread * popElement(int id);
+	Thread * getThread(int id);
 	int enqueueElement(Thread* toAdd);
 	int getSize();
 	void increaseSize();
