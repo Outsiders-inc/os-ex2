@@ -30,7 +30,7 @@ Thread* running;
 PriorityQueue* threads;
 Itimer * timer;
 IdHandler * gHandler;
-
+sigset_t gSigSet;
 void timer_handler(int sig)
 {
 	// If the running process has no "competition" over CPU time.
@@ -48,7 +48,7 @@ void timer_handler(int sig)
 
 void pauseTimer()
 {
-	if(sigprocmask(SIG_BLOCK, ? ,NULL) == FAILURE)
+	if(sigprocmask(SIG_BLOCK, &gSigSet ,NULL) == FAILURE)
 	{
 		//error
 		exit(1);
@@ -56,7 +56,7 @@ void pauseTimer()
 }
 void resumeTimer()
 {
-	if (sigprocmask(SIG_UNBLOCK, ? ,NULL) == FAILURE)
+	if (sigprocmask(SIG_UNBLOCK, &gSigSet ,NULL) == FAILURE)
 	{
 		//error
 		exit(1);
@@ -116,6 +116,16 @@ int uthread_init(int quantum_usecs)
 	Thread * main = new Thread(0, ORANGE);
 	running = main;
 	timer->set();
+	if (sigemptyset(&gSignalSet) == FAILURE)
+	{
+		cerr << SIGEMPTY_ERR <<endl;
+		exit(1);
+	}
+	if (sigaddset(&gSignalSet,SIGVTALRM) == FAILURE)
+	{
+		cerr << SIGADD_ERR <<endl;
+		exit(1);
+	}
 	return 0;
 }
 
