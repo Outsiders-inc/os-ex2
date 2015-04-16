@@ -31,12 +31,21 @@ PriorityQueue* threads;
 Itimer * timer;
 IdHandler * gHandler;
 
-void runNextThread()
+void timer_handler(int sig)
 {
-	running = threads->popElement();
-	running->increaseQuantums();
+	// If the running process has no "competition" over CPU time.
+	if (threads->isQueueEmpty()) // MAKE SURE TO WRITE "isQueueEMpty()" method
+	{
+		running->increaseQuantums();
+		gNumOfQuantums++;
+		return;
+	}
+	switchRunningThread();
 
+
+	cout << sig << endl;//// - JUST A PRINT -@#$@#$@#$@#$@#
 }
+
 void pauseTimer()
 {
 	if(sigprocmask(SIG_BLOCK, ? ,NULL) == FAILURE)
@@ -104,9 +113,34 @@ int uthread_init(int quantum_usecs)
 	timer = new Itimer(quantum_usecs, timer_handler);
 	gHandler = new IdHandler(MAX_THREAD_NUM);
 	// Build a "main" Thread and then call the timer's set() function
-	uthread_spawn(new Thread(0, ORANGE));
+	Thread * main = new Thread(0, ORANGE);
+	running = main;
 	timer->set();
 	return 0;
+}
+
+/** Switches the running thread to be the next in the READY queue, if exist
+ * 
+ */
+void switchRunningThread()
+{
+	int ret_val;
+	gNumOfQuantums++;
+	threads->enqueueElement(running);
+	ret_val = sigsetjmp(env[uthread_get_tid()],1);
+
+	if (ret_val == 0)
+	{
+		Thread* toRun;
+		toRun = threads->popElement();
+		running = toRun;
+		running->increaseQuantums();
+		siglongjmp(env[uthread_get_tid()], 1);
+
+	}
+	
+	// Check for clock errors
+
 }
 
 /* Create a new thread whose entry point is f */
@@ -157,6 +191,11 @@ int uthread_suspend(int tid)
 	{
 		//Error
 		return FAILLURE;
+	}
+	// If the process is trying to block itself
+	if (uthread_get_tid() == tid)
+	{
+		// move the main block to the READY queue
 	}
 	threads->block(tid);
 	return 0;
