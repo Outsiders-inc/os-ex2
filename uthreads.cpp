@@ -19,6 +19,7 @@
 #include "PriorityQueue.h"
 #include "Itimer.h"
 #include "IdHandler.h"
+#define FAILLURE -1
 
 using namespace std;
 typedef char * stack[STACK_SIZE];
@@ -36,14 +37,23 @@ void runNextThread()
 	running->increaseQuantums();
 
 }
-
-void timer_handler(int sig)
+void pauseTimer()
 {
-	running = threads->popElement();
-	running->increaseQuantums();
-
-	cout << sig << endl;
+	if(sigprocmask(SIG_BLOCK, ? ,NULL) == FAILURE)
+	{
+		//error
+		exit(1);
+	}
 }
+void resumeTimer()
+{
+	if (sigprocmask(SIG_UNBLOCK, ? ,NULL) == FAILURE)
+	{
+		//error
+		exit(1);
+	}
+}
+
 
 #ifdef __x86_64__
 /* code for 64 bit Intel arch */
@@ -144,7 +154,7 @@ int uthread_suspend(int tid)
 	if (tid == 0)
 	{
 		//Error
-		return 1;
+		return FAILLURE;
 	}
 	threads->block(tid);
 	return 0;
@@ -157,7 +167,7 @@ int uthread_resume(int tid)
 	if(threads->isBlocked(tid) != -1)
 	{
 		//error
-		return 1;
+		return FAILLURE;
 	}
 	return 0;
 }
