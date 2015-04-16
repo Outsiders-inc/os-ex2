@@ -19,6 +19,9 @@ Itimer::Itimer(int quanta , void (*func)(int) )
 	signal(SIGVTALRM, func);
 	tv.it_value.tv_usec = quanta;
 	tv.it_interval.tv_usec = quanta;
+}
+void Itimer::set()
+{
 	setitimer(ITIMER_VIRTUAL, &tv, NULL);
 }
 //int main(void)
