@@ -10,8 +10,8 @@
 /**
  * A constructor for Thread, receiving it's id as parameter.
  */
-Thread::Thread(int tId, Priority priority, fptr f) :
-	_id(tId), _priority(priority),  _func(f) ,_numOfQuantums(0) , _state(READY) {
+Thread::Thread(int tId, Priority priority) :
+	_id(tId), _priority(priority), _numOfQuantums(0) , _state(READY) {
 }
 
 ///**
@@ -65,10 +65,5 @@ void Thread::changeState(State newState)
 {
 	this->_state = newState;
 }
-/**
- *
- */
-fptr Thread::getFunction()
-{
-	return this->_func;
-}
+
+
