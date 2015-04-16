@@ -15,7 +15,8 @@
 
 using namespace std;
 
-class PriorityQueue {
+class PriorityQueue
+{
 public:
 	PriorityQueue();
 	virtual ~PriorityQueue();
@@ -30,10 +31,11 @@ public:
 	void resume(int id);
 	int isBlocked(int id);
 private:
-	vector< Thread*> * findInQueue(int id , int &loc);
-	int findElement(int id , vector< Thread* >);
-	 int _size;
-	 vector< Thread * > _Red, _Orange, _Green, _Blocked;
+	int findElement(int id);
+	int findInQueue(int id, vector<Thread*>);
+	int _size;
+	vector<Thread*> _Red, _Orange, _Green, _Blocked;
+	vector<Thread*> * _helpPtr;
 };
 
 #endif /* QUEUE_H_ */
