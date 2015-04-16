@@ -206,6 +206,7 @@ int uthread_suspend(int tid)
 	if (uthread_get_tid() == tid)
 	{
 		// move the main block to the READY queue
+		switchRunningThread();
 	}
 	threads->block(tid);
 	return 0;
