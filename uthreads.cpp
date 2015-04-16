@@ -103,7 +103,9 @@ int uthread_init(int quantum_usecs)
 	gNumOfQuantums = 1;
 	timer = new Itimer(quantum_usecs, timer_handler);
 	gHandler = new IdHandler(MAX_THREAD_NUM);
-
+	// Build a "main" Thread and then call the timer's set() function
+	uthread_spawn(new Thread(0, ORANGE));
+	timer->set();
 	return 0;
 }
 
