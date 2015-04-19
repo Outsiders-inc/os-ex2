@@ -39,16 +39,18 @@ void timer_handler(int sig)
 {
 	// Must pause the timer before starting this method - and resume it upon exiting this metod
 	// ........enter code here......//
+	pauseTimer();
 	
 	// If the running process has no "competition" over CPU time.
 	if (threads->isQueueEmpty()) // MAKE SURE TO WRITE "isQueueEMpty()" method
 	{
 		running->increaseQuantums();
 		gNumOfQuantums++;
+		resumeTimer();
 		return;
 	}
 	switchRunningThread();
-
+	resumeTimer();
 
 	cout << sig << endl;//// - JUST A PRINT -@#$@#$@#$@#$@#
 }
