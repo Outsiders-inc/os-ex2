@@ -19,7 +19,10 @@
 #include "PriorityQueue.h"
 #include "Itimer.h"
 #include "IdHandler.h"
-#define FAILLURE -1
+#define FAILURE -1
+
+#define SIGEMPTY_ERR "system error: text\n"
+#define SIGADD_ERR "thread library error: text\n"
 
 using namespace std;
 typedef char * stack[STACK_SIZE];
@@ -31,29 +34,6 @@ PriorityQueue* threads;
 Itimer * timer;
 IdHandler * gHandler;
 sigset_t gSigSet;
-
-/**
- * A method which handles the events that take place at the end of each time-quanta.
- */
-void timer_handler(int sig)
-{
-	// Must pause the timer before starting this method - and resume it upon exiting this metod
-	// ........enter code here......//
-	pauseTimer();
-	
-	// If the running process has no "competition" over CPU time.
-	if (threads->isQueueEmpty()) // MAKE SURE TO WRITE "isQueueEMpty()" method
-	{
-		running->increaseQuantums();
-		gNumOfQuantums++;
-		resumeTimer();
-		return;
-	}
-	switchRunningThread();
-	resumeTimer();
-
-	cout << sig << endl;//// - JUST A PRINT -@#$@#$@#$@#$@#
-}
 
 void pauseTimer()
 {
@@ -71,6 +51,54 @@ void resumeTimer()
 		exit(1);
 	}
 }
+
+/** Switches the running thread to be the next in the READY queue, if exist
+ *
+ */
+void switchRunningThread()
+{
+	int ret_val;
+	gNumOfQuantums++;
+	threads->enqueueElement(running);
+	ret_val = sigsetjmp(env[uthread_get_tid()],1);
+
+	if (ret_val == 0)
+	{
+		Thread* toRun;
+		toRun = threads->popElement();
+		running = toRun;
+		running->increaseQuantums();
+		siglongjmp(env[uthread_get_tid()], 1);
+
+	}
+
+	// Check for clock errors
+
+}
+
+/**
+ * A method which handles the events that take place at the end of each time-quanta.
+ */
+void timer_handler(int sig)
+{
+	// Must pause the timer before starting this method - and resume it upon exiting this metod
+	// ........enter code here......//
+	pauseTimer();
+
+	// If the running process has no "competition" over CPU time.
+	if (threads->isQueueEmpty()) // MAKE SURE TO WRITE "isQueueEMpty()" method
+	{
+		running->increaseQuantums();
+		gNumOfQuantums++;
+		resumeTimer();
+		return;
+	}
+	switchRunningThread();
+	resumeTimer();
+
+	cout << sig << endl;//// - JUST A PRINT -@#$@#$@#$@#$@#
+}
+
 
 
 #ifdef __x86_64__
@@ -125,41 +153,17 @@ int uthread_init(int quantum_usecs)
 	Thread * main = new Thread(0, ORANGE);
 	running = main;
 	timer->set();
-	if (sigemptyset(&gSignalSet) == FAILURE)
+	if (sigemptyset(&gSigSet) == FAILURE)
 	{
-		cerr << SIGEMPTY_ERR <<endl;
+		cerr << SIGEMPTY_ERR << endl;
 		exit(1);
 	}
-	if (sigaddset(&gSignalSet,SIGVTALRM) == FAILURE)
+	if (sigaddset(&gSigSet,SIGVTALRM) == FAILURE)
 	{
-		cerr << SIGADD_ERR <<endl;
+		cerr << SIGADD_ERR << endl;
 		exit(1);
 	}
 	return 0;
-}
-
-/** Switches the running thread to be the next in the READY queue, if exist
- * 
- */
-void switchRunningThread()
-{
-	int ret_val;
-	gNumOfQuantums++;
-	threads->enqueueElement(running);
-	ret_val = sigsetjmp(env[uthread_get_tid()],1);
-
-	if (ret_val == 0)
-	{
-		Thread* toRun;
-		toRun = threads->popElement();
-		running = toRun;
-		running->increaseQuantums();
-		siglongjmp(env[uthread_get_tid()], 1);
-
-	}
-	
-	// Check for clock errors
-
 }
 
 /* Create a new thread whose entry point is f */
@@ -179,7 +183,7 @@ int uthread_spawn(void (*f)(void), Priority pr)
 	(env[id]->__jmpbuf)[JB_SP] = translate_address(sp);
 	(env[id]->__jmpbuf)[JB_PC] = translate_address(pc);
 	sigemptyset(&env[id]->__saved_mask);
-	threads->enqueueElement(new Thread(id, pr, f));
+	threads->enqueueElement(new Thread(id, pr));
 	return id;
 }
 
@@ -197,7 +201,7 @@ int uthread_terminate(int tid)
 		{
 			delete[] gMem[i];
 		}
-		delete[] gMem;
+		delete *gMem;
 		exit(0);
 	}
 	return 0;
@@ -209,7 +213,7 @@ int uthread_suspend(int tid)
 	if (tid == 0)
 	{
 		//Error
-		return FAILLURE;
+		return FAILURE;
 	}
 	// If the process is trying to block itself
 	if (uthread_get_tid() == tid)
@@ -228,7 +232,7 @@ int uthread_resume(int tid)
 	if(threads->isBlocked(tid) != -1)
 	{
 		//error
-		return FAILLURE;
+		return FAILURE;
 	}
 	return 0;
 }
