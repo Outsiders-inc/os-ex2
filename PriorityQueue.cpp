@@ -210,7 +210,7 @@ void PriorityQueue::resume(int id)
 /**
  * Returns 0 iff all queues except blocked are empty.
 */
-int isQueueEmpty()
+int PriorityQueue::isQueueEmpty()
 {
 	return _Red.size() + _Green.size() + _Orange.size();		
 }
