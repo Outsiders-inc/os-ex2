@@ -46,6 +46,7 @@ Thread * PriorityQueue::popElement()
 		element = this->_Green.front();
 		_Green.erase(_Green.begin());
 	}
+	this->decreaseSize();
 	return element;
 }
 /**
@@ -88,7 +89,7 @@ int PriorityQueue::enqueueElement(Thread* toAdd)
 		break;
 	}
 	//__________________________to erase all size matters
-	increaseSize();
+	this->increaseSize();
 	return 0;
 }
 
@@ -147,6 +148,7 @@ void PriorityQueue::removeElement(int id)
 	if(location != -1)
 	{
 		_helpPtr->erase(_helpPtr->begin() + location);
+		this->decreaseSize();
 	}
 }
 /**
@@ -212,5 +214,5 @@ void PriorityQueue::resume(int id)
 */
 int PriorityQueue::isQueueEmpty()
 {
-	return _Red.size() + _Green.size() + _Orange.size();		
+	return (_Red.size() + _Green.size() + _Orange.size());
 }
