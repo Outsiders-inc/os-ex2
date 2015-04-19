@@ -24,8 +24,9 @@ using namespace std;
 
 void f()
 {
-cout<<"In f"<<endl;
+	cout<<"In f"<<endl;
 }
+
 int main(int argc, char **argv)
 {
 		// --------------- Testing Thread Class ----------------- //
@@ -35,7 +36,7 @@ int main(int argc, char **argv)
 	int idNum = 0;
 	for (int i= 0; i < ITER_NUM; i++)
 	{
-		Thread th1 = Thread(idNum, RED, &f);
+		Thread th1 = Thread(idNum, RED);
 		if (th1.getId() != idNum)
 		{
 			cout <<	"Thread's ID don't match, got " << th1.getId() << " instead of "
@@ -44,9 +45,9 @@ int main(int argc, char **argv)
 		idNum++;
 	}
 				// ------- PRIORITY test ------- //
-	Thread th1 =  Thread(3, RED, &f);
-	Thread th2 = Thread(1, ORANGE, &f);
-	Thread th3 = Thread(2, GREEN, &f);
+	Thread th1 =  Thread(3, RED);
+	Thread th2 = Thread(1, ORANGE);
+	Thread th3 = Thread(2, GREEN);
 	if (th1.getPriority() != RED)
 	{
 		cout <<	"Thread's priority don't match, got " << th1.getPriority() << " instead of "
