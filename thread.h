@@ -15,7 +15,7 @@ class Thread
 {
 public:
 	Thread(int tId, Priority priority);
-	virtual ~Thread();
+	~Thread();
 	int getNumOfQuantums();
 	void increaseQuantums();
 	int getId();
