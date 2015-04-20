@@ -31,7 +31,7 @@ void Itimer::set()
 	{
 		//error
 		exit(1);
-	};
+	}
 }
 //int main(void)
 //{
