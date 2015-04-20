@@ -10,6 +10,8 @@
 
 #include <stdio.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <math.h>
 #include <sys/time.h>
 
 #define SECOND 1000000
