@@ -1,5 +1,5 @@
 /*
- * moshe-test1.cpp
+ * test1.cpp
  *
  * test suspends and resume
  *
@@ -48,9 +48,9 @@ void f (void)
 				return;
 			}
 			i++;
-			cout << "\t\t\t\t\tinside the 'if' in f(), i = " << i << endl;
+//			cout << "\t\t\t\t\tinside the 'if' in f(), i = " << i << endl;
 		}
-		cout << "\t\t\t\tinside f(), i = " << i << endl;
+//		cout << "\t\t\t\tinside f(), i = " << i << endl;
 	}
 }
 void g (void)
@@ -70,9 +70,9 @@ void g (void)
 				return;
 			}
 			i++;
-			cout << "\t\t\t\t\tinside the 'if' in g(), i = " << i << endl;
+//			cout << "\t\t\t\t\tinside the 'if' in g(), i = " << i << endl;
 		}
-		cout << "\t\t\t\tinside g(), i = " << i << endl;
+//		cout << "\t\t\t\tinside g(), i = " << i << endl;
 	}
 }
 int main(void)
