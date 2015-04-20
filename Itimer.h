@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <sys/time.h>
 
-
+#define SECOND 1000000
 class Itimer{
 public:
 Itimer(int quanta, void (*func)(int));
