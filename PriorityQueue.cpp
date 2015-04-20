@@ -8,16 +8,24 @@
 #include "PriorityQueue.h"
 
 PriorityQueue::PriorityQueue() :
-		_size(0), _Red(), _Orange(), _Green(), _Blocked(),_helpPtr()
+		_size(0),_helpPtr(NULL),
+		_Red(new vector<Thread*>()),_Orange(new vector<Thread*>()),
+		_Green(new vector<Thread*>()),
+		_Blocked(new vector<Thread*>()),
+		_queue()
 {
+	_queue[I_RED] = _Red;
+	_queue[I_ORANGE] = _Orange;
+	_queue[I_GREEN] = _Green;
+	_queue[I_BLOCKED] = _Blocked;
 }
 
 PriorityQueue::~PriorityQueue()
 {
-	_Red.clear();
-	_Green.clear();
-	_Orange.clear();
-	_Blocked.clear();
+	_Red->clear();
+	_Green->clear();
+	_Orange->clear();
+	_Blocked->clear();
 }
 
 /**
@@ -31,20 +39,20 @@ Thread * PriorityQueue::popElement()
 		return NULL;
 	}
 	Thread* element;
-	if (this->_Red.size() > 0)
+	if (this->_Red->size() > 0)
 	{
-		element = this->_Red.front();
-		_Red.erase(_Red.begin());
+		element = this->_Red->front();
+		_Red->erase(_Red->begin());
 	}
-	else if (this->_Orange.size() > 0)
+	else if (this->_Orange->size() > 0)
 	{
-		element = this->_Orange.front();
-		_Orange.erase(_Orange.begin());
+		element = this->_Orange->front();
+		_Orange->erase(_Orange->begin());
 	}
 	else
 	{
-		element = this->_Green.front();
-		_Green.erase(_Green.begin());
+		element = this->_Green->front();
+		_Green->erase(_Green->begin());
 	}
 	this->decreaseSize();
 	return element;
@@ -57,10 +65,10 @@ int PriorityQueue::get_quantums(int id)
 	int location = findElement(id);
 	if (location == -1)
 	{
-		location = findInQueue(id, _Blocked);
+		location = findInQueue(id, I_BLOCKED);
 		if (location != -1)
 		{
-			_helpPtr = &_Blocked;
+			_helpPtr = _Blocked;
 		}
 
 	}
@@ -68,6 +76,7 @@ int PriorityQueue::get_quantums(int id)
 	{
 		return _helpPtr->at(location)->getNumOfQuantums();
 	}
+	cout << "NO SUCH ID FOUND (id = " << id << ")" << endl;
 	return -1;
 }
 
@@ -79,13 +88,13 @@ int PriorityQueue::enqueueElement(Thread* toAdd)
 	switch (toAdd->getPriority())
 	{
 	case RED:
-		this->_Red.push_back(toAdd);
+		this->_Red->push_back(toAdd);
 		break;
 	case ORANGE:
-		this->_Orange.push_back(toAdd);
+		this->_Orange->push_back(toAdd);
 		break;
 	default:
-		this->_Green.push_back(toAdd);
+		this->_Green->push_back(toAdd);
 		break;
 	}
 	//__________________________to erase all size matters
@@ -120,15 +129,22 @@ void PriorityQueue::decreaseSize()
 /**
  *
  */
-int PriorityQueue::findInQueue(int id, vector<Thread *> vec)
+int PriorityQueue::findInQueue(int id, int vecNum)
 {
-	for (unsigned int i = 0; i < vec.size(); ++i)
+	cout << "\t\t\tinside 'findInQueue' with id = " << id << endl;		////-----ERASE---------------------///
+	unsigned int i, size;
+
+	size = _queue[vecNum]->size();
+	cout << "\t\t\tThe queue's size is: " << size << endl;		////-----ERASE---------------------///
+	for (i = 0; i < size; i++)
 	{
-		if (vec[i]->getId() == id)
+		cout << "\t\t\t\titeration number " << i << endl;		////-----ERASE---------------------///
+		if (_queue[vecNum]->at(i)->getId() == id)
 		{
 			return i;
 		}
 	}
+	cout << "id not found in vector num': " << vecNum << endl;		////-----ERASE---------------------///
 	return -1;
 }
 /**
@@ -137,19 +153,21 @@ int PriorityQueue::findInQueue(int id, vector<Thread *> vec)
  */
 int PriorityQueue::isBlocked(int id)
 {
-	return findInQueue(id, _Blocked);
+	return findInQueue(id, I_BLOCKED);
 }
 /**
  *
  */
-void PriorityQueue::removeElement(int id)
+int PriorityQueue::removeElement(int id)
 {
 	int location = findElement(id);
 	if(location != -1)
 	{
 		_helpPtr->erase(_helpPtr->begin() + location);
 		this->decreaseSize();
+		return 1;
 	}
+	return 0;
 }
 /**
  * Returns a pointer to queue in which the given id can be found.
@@ -157,30 +175,36 @@ void PriorityQueue::removeElement(int id)
  */
 int PriorityQueue::findElement(int id)
 {
-	_helpPtr = NULL;
-	int loc = findInQueue(id, _Red);
+//	cout << "\t\t\tinside 'find element' with id = " << id << endl;		////-----ERASE---------------------///
+
+//	_helpPtr = NULL;
+	cout << "\t\t\tbefore 'findInQueue' in RED" << endl;		////-----ERASE---------------------///
+	int loc = findInQueue(id, I_RED);
+//	cout << "\t\t\tsearched the RED queue, loc = " << loc << endl;		////-----ERASE---------------------///
 	if (loc != -1)
 	{
-		_helpPtr = &_Red;
+		_helpPtr = _Red;
 	}
 	else
 	{
-		loc = findInQueue(id, _Orange);
+		loc = findInQueue(id, I_ORANGE);
+		cout << "\t\t\tsearched the ORANGE queue, loc = " << loc << endl;		////-----ERASE---------------------///
 		if (loc != -1)
 
 		{
-			_helpPtr = &_Orange;
+			_helpPtr  =  _Orange;
 		}
 		else
 		{
-			loc = findInQueue(id, _Green);
+			loc = findInQueue(id, I_GREEN);
+			cout << "\t\t\tsearched the GREEN queue, loc = " << loc << endl;		////-----ERASE---------------------///
 			if (loc != -1)
 			{
-				_helpPtr = &_Green;
+				_helpPtr = _Green;
 			}
 		}
 	}
-
+	cout << "\t\t\tthe location found is loc = " << loc << endl;		////-----ERASE---------------------///
 	return loc;
 }
 /**
@@ -192,7 +216,7 @@ void PriorityQueue::block(int id)
 	int location = findElement(id);
 	if (location != -1)
 	{
-		_Blocked.push_back(_helpPtr->at(location));
+		_Blocked->push_back(_helpPtr->at(location));
 		_helpPtr->erase(_helpPtr->begin() + location);
 	}
 }
@@ -205,8 +229,8 @@ void PriorityQueue::resume(int id)
 	int location = isBlocked(id);
 	if (location != -1)
 	{
-		enqueueElement(_Blocked.at(location));
-		_Blocked.erase(_Blocked.begin() + location);
+		enqueueElement(_Blocked->at(location));
+		_Blocked->erase(_Blocked->begin() + location);
 	}
 }
 /**
@@ -214,5 +238,6 @@ void PriorityQueue::resume(int id)
 */
 int PriorityQueue::isQueueEmpty()
 {
-	return (_Red.size() + _Green.size() + _Orange.size());
+	int size = _Red->size() + _Green->size() + _Orange->size();
+	return (size == 0);
 }
