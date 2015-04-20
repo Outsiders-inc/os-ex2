@@ -12,7 +12,10 @@
 #include <vector>
 //___for now
 #include <iostream>
-
+#define I_RED 0
+#define I_ORANGE 1
+#define I_GREEN 2
+#define I_BLOCKED 3
 using namespace std;
 
 class PriorityQueue
@@ -27,17 +30,18 @@ public:
 	int getSize();
 	void increaseSize();
 	void decreaseSize();
-	void removeElement(int id);
+	int removeElement(int id);
 	void block(int id);
 	void resume(int id);
 	int isBlocked(int id);
 	int isQueueEmpty();
 private:
 	int findElement(int id);
-	int findInQueue(int id, vector<Thread*>);
+	int findInQueue(int id, int vecNum);
 	int _size;
-	vector<Thread*> _Red, _Orange, _Green, _Blocked;
 	vector<Thread*> * _helpPtr;
+	vector<Thread*> * _Red, * _Orange, *_Green, *_Blocked;
+	vector<Thread*> * _queue[I_BLOCKED + 1];
 };
 
 #endif /* QUEUE_H_ */
