@@ -17,8 +17,13 @@ struct itimerval tv;
 Itimer::Itimer(int quanta , void (*func)(int) )
 {
 	signal(SIGVTALRM, func);
-	tv.it_value.tv_usec = quanta;
-	tv.it_interval.tv_usec = quanta;
+	//Adapting seconds so decreasing will be effective
+	int seconds = floor(quanta/SECOND );
+	int microseconds = quanta - seconds*SECOND;
+	tv.it_value.tv_sec = seconds; 
+	tv.it_value.tv_usec = microseconds; 
+	tv.it_interval.tv_sec = seconds; 
+	tv.it_interval.tv_usec = microseconds; 
 }
 void Itimer::set()
 {
