@@ -59,18 +59,18 @@ void switchRunningThread()
 {
 	pauseTimer();
 	gNumOfQuantums++;
-	gThreads.enqueueElement(gRunning);
-	gRunning = gThreads.popElement();
-	gRunning->increaseQuantums();
 	if (sigsetjmp(env[uthread_get_tid()],1) != 0)
 	{
 		resumeTimer();
 		return;
 	}
+	gThreads.enqueueElement(gRunning);
+	gRunning = gThreads.popElement();
+	gRunning->increaseQuantums();
 	cout << "switching  id:" <<uthread_get_tid() <<  endl;	////-----ERASE---------------------/
 	resumeTimer();
 	siglongjmp(env[uthread_get_tid()], 1);
-	cout << "switching 2" <<  endl;							////-----ERASE---------------------/
+	cout << "switching finished" <<  endl;							////-----ERASE---------------------/
 	// Check for clock errors
 }
 
@@ -83,15 +83,10 @@ void terminateRunningThread()
 	gNumOfQuantums++;
 	gRunning = gThreads.popElement();
 	gRunning->increaseQuantums();
-	if (sigsetjmp(env[uthread_get_tid()],1) != 0)
-	{
-		resumeTimer();
-		return;
-	}
-	cout << "switching  id:" <<uthread_get_tid() <<  endl;	////-----ERASE---------------------/
+	cout << "switching after terminating  id:" <<uthread_get_tid() <<  endl;	////-----ERASE---------------------/
 	resumeTimer();
 	siglongjmp(env[uthread_get_tid()], 1);
-	cout << "switching 2" <<  endl;							////-----ERASE---------------------/
+	cout << "terminating finished" <<  endl;							////-----ERASE---------------------/
 	// Check for clock errors
 }
 
@@ -169,7 +164,15 @@ int uthread_init(int quantum_usecs)
 	gThreads = PriorityQueue();
 	gTimer = new Itimer(quantum_usecs, timer_handler);
 	gHandler = new IdHandler(MAX_THREAD_NUM);
+
+//--------------------------------------------------------
+	// Must activate "spawn" on Main, so it will exist as a thread with relevant stack and buffer
+	// send 0 as the void(*) that spawn expect. NEED TO FIGURE OUT HOW TO DO IT.......
 	Thread * main = new Thread(0, ORANGE);
+	uthread_spawn(0, ORANGE);
+	// I think what we have up here /\ is meaningless.
+//--------------------------------------------------------
+
 	cout << "\t\tcreated a Main thread" << endl;								////-----ERASE---------------------///
 	gRunning = main;
 	gRunning->increaseQuantums();
