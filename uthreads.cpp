@@ -25,13 +25,13 @@
 #define SIGADD_ERR "thread library error: text\n"
 
 using namespace std;
-typedef char * stack[STACK_SIZE];
-stack * gMem[MAX_THREAD_NUM];
+typedef char stack[STACK_SIZE];
+stack gMem[MAX_THREAD_NUM];
 sigjmp_buf env[MAX_THREAD_NUM];
 int gNumOfQuantums;
-Thread* running;
-PriorityQueue* threads;
-Itimer * timer;
+Thread* gRunning;
+PriorityQueue gThreads;
+Itimer * gTimer;
 IdHandler * gHandler;
 sigset_t gSigSet;
 
@@ -57,23 +57,42 @@ void resumeTimer()
  */
 void switchRunningThread()
 {
-	int ret_val;
+	pauseTimer();
 	gNumOfQuantums++;
-	threads->enqueueElement(running);
-	ret_val = sigsetjmp(env[uthread_get_tid()],1);
-
-	if (ret_val == 0)
+	gThreads.enqueueElement(gRunning);
+	gRunning = gThreads.popElement();
+	gRunning->increaseQuantums();
+	if (sigsetjmp(env[uthread_get_tid()],1) != 0)
 	{
-		Thread* toRun;
-		toRun = threads->popElement();
-		running = toRun;
-		running->increaseQuantums();
-		siglongjmp(env[uthread_get_tid()], 1);
-
+		resumeTimer();
+		return;
 	}
-
+	cout << "switching  id:" <<uthread_get_tid() <<  endl;	////-----ERASE---------------------/
+	resumeTimer();
+	siglongjmp(env[uthread_get_tid()], 1);
+	cout << "switching 2" <<  endl;							////-----ERASE---------------------/
 	// Check for clock errors
+}
 
+/** Terminates the running thread and runs the next in the READY queue, if exist
+ *
+ */
+void terminateRunningThread()
+{
+	pauseTimer();
+	gNumOfQuantums++;
+	gRunning = gThreads.popElement();
+	gRunning->increaseQuantums();
+	if (sigsetjmp(env[uthread_get_tid()],1) != 0)
+	{
+		resumeTimer();
+		return;
+	}
+	cout << "switching  id:" <<uthread_get_tid() <<  endl;	////-----ERASE---------------------/
+	resumeTimer();
+	siglongjmp(env[uthread_get_tid()], 1);
+	cout << "switching 2" <<  endl;							////-----ERASE---------------------/
+	// Check for clock errors
 }
 
 /**
@@ -86,17 +105,16 @@ void timer_handler(int sig)
 	pauseTimer();
 
 	// If the running process has no "competition" over CPU time.
-	if (threads->isQueueEmpty()) // MAKE SURE TO WRITE "isQueueEMpty()" method
+	if (gThreads.isQueueEmpty()) // MAKE SURE TO WRITE "isQueueEMpty()" method
 	{
-		running->increaseQuantums();
+		cout << "\ttimer_handler and queue size is " << gThreads.isQueueEmpty() << endl;	////-----ERASE---------------------///
+		gRunning->increaseQuantums();
 		gNumOfQuantums++;
 		resumeTimer();
 		return;
 	}
-	switchRunningThread();
 	resumeTimer();
-
-	cout << sig << endl;//// - JUST A PRINT -@#$@#$@#$@#$@#
+	switchRunningThread();
 }
 
 
@@ -146,13 +164,18 @@ address_t translate_address(address_t addr)
  */
 int uthread_init(int quantum_usecs)
 {
+//	cout << "\tinside init method with quantum = " << quantum_usecs << endl;	////-----ERASE---------------------///
 	gNumOfQuantums = 1;
-	timer = new Itimer(quantum_usecs, timer_handler);
+	gThreads = PriorityQueue();
+	gTimer = new Itimer(quantum_usecs, timer_handler);
 	gHandler = new IdHandler(MAX_THREAD_NUM);
-	// Build a "main" Thread and then call the timer's set() function
 	Thread * main = new Thread(0, ORANGE);
-	running = main;
-	timer->set();
+	cout << "\t\tcreated a Main thread" << endl;								////-----ERASE---------------------///
+	gRunning = main;
+	gRunning->increaseQuantums();
+	cout << "\t\tAssigned Main thread to be the running thread" << endl;		////-----ERASE---------------------///
+	gTimer->set();
+	cout << "\t\ttimer was set" << endl;										////-----ERASE---------------------///
 	if (sigemptyset(&gSigSet) == FAILURE)
 	{
 		cerr << SIGEMPTY_ERR << endl;
@@ -163,6 +186,7 @@ int uthread_init(int quantum_usecs)
 		cerr << SIGADD_ERR << endl;
 		exit(1);
 	}
+//	cout << "\t\tNo failures in the timer run\n" << endl;							////-----ERASE---------------------///
 	return 0;
 }
 
@@ -183,27 +207,40 @@ int uthread_spawn(void (*f)(void), Priority pr)
 	(env[id]->__jmpbuf)[JB_SP] = translate_address(sp);
 	(env[id]->__jmpbuf)[JB_PC] = translate_address(pc);
 	sigemptyset(&env[id]->__saved_mask);
-	threads->enqueueElement(new Thread(id, pr));
+	gThreads.enqueueElement(new Thread(id, pr));
 	return id;
 }
 
 /* Terminate a thread */
 int uthread_terminate(int tid)
 {
-	gHandler->removeId(tid);
-	threads->removeElement(tid);
-	delete gMem[tid];
+
 	if (tid == 0)
 	{
-		delete timer;
+		delete gTimer;
 		delete gHandler;
-		for (int i = 0; i < MAX_THREAD_NUM; ++i)
-		{
-			delete[] gMem[i];
-		}
-		delete *gMem;
+//		for (int i = 0; i < MAX_THREAD_NUM; ++i)
+//		{
+//			delete[] gMem[i];		// Bring back if we turn gMem() into an array of pointers again
+//		}
+//		delete *gMem;				// Bring back if we turn gMem() into an array of pointers again
 		exit(0);
 	}
+	//Not found in queue
+	if(!gThreads.removeElement(tid))
+	{
+		if(tid == uthread_get_tid())
+		{
+//			delete gMem[tid];			// Bring back if we turn gMem() into an array of pointers again
+			gHandler->removeId(tid);
+			terminateRunningThread();
+			delete gRunning;
+		}
+		//error
+		return FAILURE;
+	}
+//	delete gMem[tid];				// Bring back if we turn gMem() into an array of pointers again
+	gHandler->removeId(tid);
 	return 0;
 }
 
@@ -221,15 +258,15 @@ int uthread_suspend(int tid)
 		// move the main block to the READY queue
 		switchRunningThread();
 	}
-	threads->block(tid);
+	gThreads.block(tid);
 	return 0;
 }
 
 /* Resume a thread */
 int uthread_resume(int tid)
 {
-	threads->resume(tid);
-	if(threads->isBlocked(tid) != -1)
+	gThreads.resume(tid);
+	if(gThreads.isBlocked(tid) != -1)
 	{
 		//error
 		return FAILURE;
@@ -241,17 +278,30 @@ int uthread_resume(int tid)
 int uthread_get_tid()
 {
 
-	return running->getId();
+	return gRunning->getId();
 }
 
 /* Get the total number of library quantums */
 int uthread_get_total_quantums()
 {
-	return 0;
+	return gNumOfQuantums;
 }
 
 /* Get the number of thread quantums */
 int uthread_get_quantums(int tid)
 {
-	return threads->get_quantums(tid);
+//	cout << "\t\t\tinside uthread_get_quantums with tid = " << tid << endl;		////-----ERASE---------------------///
+	if (tid == uthread_get_tid())
+	{
+		// If the id belongs to the running thread
+//		cout << "\t\t\tid belongs to the running thread" << endl;						////-----ERASE---------------------///
+		return gRunning->getNumOfQuantums();
+	}
+
+	int quantums =  gThreads.get_quantums(tid);
+	if (quantums == FAILURE)
+	{
+		cout << "\t\t\tNO SUCH ID FOUND (id = " << tid << ")" << endl;
+	}
+	return quantums;
 }
