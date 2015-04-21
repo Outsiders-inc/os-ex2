@@ -8,11 +8,11 @@
 #include "PriorityQueue.h"
 
 PriorityQueue::PriorityQueue() :
-		_size(0),_helpPtr(NULL),
-		_Red(new vector<Thread*>()),_Orange(new vector<Thread*>()),
-		_Green(new vector<Thread*>()),
-		_Blocked(new vector<Thread*>()),
-		_queue()
+_size(0),_helpPtr(NULL),
+_Red(new vector<Thread*>()),_Orange(new vector<Thread*>()),
+_Green(new vector<Thread*>()),
+_Blocked(new vector<Thread*>()),
+_queue()
 {
 	_queue[I_RED] = _Red;
 	_queue[I_ORANGE] = _Orange;
@@ -139,6 +139,7 @@ int PriorityQueue::findInQueue(int id, int vecNum)
 	for (i = 0; i < size; i++)
 	{
 		cout << "\t\t\t\titeration number " << i << endl;		////-----ERASE---------------------///
+		cout<< "The thread found in this iteration has id: " <<_queue[vecNum]->at(i)->getId() << endl;
 		if (_queue[vecNum]->at(i)->getId() == id)
 		{
 			return i;
@@ -167,28 +168,45 @@ int PriorityQueue::removeElement(int id)
 		this->decreaseSize();
 		return 1;
 	}
+	location = findInQueue(id, I_BLOCKED);
+	if(location != -1)
+	{
+		_Blocked->erase(_Blocked->begin() + location);
+		this->decreaseSize();
+		return 1;
+	}
 	return 0;
 }
+
+/**
+ * is the block list empty?
+ */
+bool PriorityQueue::isBlockListEmpty()
+{
+	return (_Blocked->size() > 0);
+}
+
 /**
  * Returns a pointer to queue in which the given id can be found.
  * Inserts into location the location in the queue.
  */
 int PriorityQueue::findElement(int id)
 {
-//	cout << "\t\t\tinside 'find element' with id = " << id << endl;		////-----ERASE---------------------///
+	cout << "\t\t\tinside 'find element' with id = " << id << endl;		////-----ERASE---------------------///
 
-//	_helpPtr = NULL;
+	//	_helpPtr = NULL;
 	cout << "\t\t\tbefore 'findInQueue' in RED" << endl;		////-----ERASE---------------------///
 	int loc = findInQueue(id, I_RED);
-//	cout << "\t\t\tsearched the RED queue, loc = " << loc << endl;		////-----ERASE---------------------///
+	cout << "\t\t\tsearched the RED queue, loc = " << loc << endl;		////-----ERASE---------------------///
 	if (loc != -1)
 	{
+		cout << "\t\t\thelp ptr is now Red"<< endl;		////-----ERASE---------------------///
 		_helpPtr = _Red;
 	}
 	else
 	{
 		loc = findInQueue(id, I_ORANGE);
-		cout << "\t\t\tsearched the ORANGE queue, loc = " << loc << endl;		////-----ERASE---------------------///
+		//		cout << "\t\t\tsearched the ORANGE queue, loc = " << loc << endl;		////-----ERASE---------------------///
 		if (loc != -1)
 
 		{
@@ -197,14 +215,14 @@ int PriorityQueue::findElement(int id)
 		else
 		{
 			loc = findInQueue(id, I_GREEN);
-			cout << "\t\t\tsearched the GREEN queue, loc = " << loc << endl;		////-----ERASE---------------------///
+			//			cout << "\t\t\tsearched the GREEN queue, loc = " << loc << endl;		////-----ERASE---------------------///
 			if (loc != -1)
 			{
 				_helpPtr = _Green;
 			}
 		}
 	}
-	cout << "\t\t\tthe location found is loc = " << loc << endl;		////-----ERASE---------------------///
+	//	cout << "\t\t\tthe location found is loc = " << loc << endl;		////-----ERASE---------------------///
 	return loc;
 }
 /**
@@ -235,7 +253,7 @@ void PriorityQueue::resume(int id)
 }
 /**
  * Returns 0 iff all queues except blocked are empty.
-*/
+ */
 int PriorityQueue::isQueueEmpty()
 {
 	int size = _Red->size() + _Green->size() + _Orange->size();
