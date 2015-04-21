@@ -1,0 +1,8 @@
+getting to the directory in Shahar's library:
+----------------------------------------------
+cd 3rd-year/OS/ex2
+
+compiling the shit:
+-------------------
+g++ -Wall -std=c++11 IdHandler.h IdHandler.cpp Itimer.h Itimer.cpp PriorityQueue.h PriorityQueue.cpp Thread.h Thread.cpp uthreads.h uthreads.cpp moshe-test1.cpp -o ex2
+ex2
