@@ -34,6 +34,7 @@ public:
 	void block(int id);
 	void resume(int id);
 	int isBlocked(int id);
+	bool isBlockListEmpty();
 	int isQueueEmpty();
 private:
 	int findElement(int id);
