@@ -3,13 +3,55 @@ Shahar Osovsky (300579786), David Gvirts (200117679)
 Ex: 2
 
 FILES:
-osm.cpp -- This file provides a few functions for measuring the time it takes to perform 
-different operations.
-Makefile --
+uthreads.h -- This file you provided us, which contains the declarations of the public functions
+			to be implemented on the *.cpp file.
+uthreads.cpp -- Our implementation of a User-Level Threads Library, based on the header file above.
+Thread.h -- A header file for class Thread, which represents a single Thread in an RR+ scheduling.
+Thread.cpp -- Implementation of the class declared in the header file.
+PriorityQueue.h -- A header file for class PriorityQueue, which represents a priority-queue which 
+				consists of three queues (red, orange and green) and a Blocked list.
+PriorityQueue.cpp -- Implementation of the class declared in the header file.
+Itimer.h -- A header file for class Itimer, which handles a virtual timer, sending signals every
+			pre-defined time-quanta.
+Itimer.cpp -- Implementation of the class declared in the header file. 
+IdHandler.h -- A header file for class IdHandler, which is a mechanism which assigns id's to new
+			Threads, and removes id's of terminated ones.	
+IdHandler.cpp -- Implementation of the class declared in the header file. 
+Makefile -- The makefile for this program, which also creates a library file and a jar file.
 README -- This file
 
 REMARKS:
-	No, thanks.
-	
+	Priority-queue: the queue is a class which is in fact comprised of 4 different "queues" (3
+		for the READY - each color has one, and one for the BLOCKED), actually represented by 
+		vectors, which is efficient enough when popping and enququing (because we always pop the 
+		thread at the 1st cell of the vector).
+	Timer: The timer is initiated at the "uthreads_init()" method as uthreads.cpp, which creates an
+		instance of Itimer object, and assigns the "timer_handler()" method to each time 
+		signal. The "timer_handler()" is simply incharge of who's RUNNING as of the next time 
+		quanta - either the next in the READY queue, or the same RUNNING Thread (if it's the only
+		active thread - not blocked).
+	Id's: are handled by a class called IdHandler, which finds the lowest available id's (for new
+		threads that need id), and marks available id's as available (when a thread is terminated).
+	Threads: are represented in by instances of class Thread, which saves their id, priority and
+			the number of time-quantas which it ran.
+		The stacks and buffer for each Thread are handled by the uthread.cpp, which holds an
+			array of stacks, which at the id's place - holds the stack for the Thread with that id.
+	uthreads: We use a pauseTimer() and resumeTimer() when calculating things outside of the
+		running threads, and so those calculations will not take time out of the Thread's quanta.
+	We used a switchRunningThread() to handle the switching (take the next READY Thread to be 
+		RUNNING, and the RUNNING is enqueued back in the READY queue). For special cases (such as
+		a Thread terminating or suspending itslef) we used a slightly different version called
+		terminateRunningThread() - which only handles the next READY Thread, ignoring the one that 
+		is currently marked as RUNNING.
+
 ANSWERS:
 .........
+Question 1:
+	RR cons: There are no priorities amongst the thread, so important tasks could take a long time 
+	to finish. Pros: All threads get an equal chance to run. PQ cons: A task may not be finite, so 
+	other tasks may never get a chance to run. Pros: More "important" task will run first (until 
+	suspended or terminated). RR+: Each thread runs only for a pre-deretmined time-quanta - 
+	preventing infinite loops, and important tasks will still get prioritized over less-important.
+Question 2:
+	A classic example is waiting for input from the user: the running thread will be blocked until
+		such data will be received (because the thread can't continue without that data).
