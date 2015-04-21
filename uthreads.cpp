@@ -23,6 +23,7 @@
 
 #define SIGEMPTY_ERR "system error: text\n"
 #define SIGADD_ERR "thread library error: text\n"
+#define SIGACTION_ERR "system error: text\n"
 
 using namespace std;
 typedef char stack[STACK_SIZE];
@@ -34,22 +35,34 @@ PriorityQueue gThreads;
 Itimer * gTimer;
 IdHandler * gHandler;
 sigset_t gSigSet;
+struct sigaction gAction;
+bool gTimerOn;
 
 void pauseTimer()
 {
+//	if (!gTimerOn)
+//	{
+//		return;
+//	}
 	if(sigprocmask(SIG_BLOCK, &gSigSet ,NULL) == FAILURE)
 	{
 		//error
 		exit(1);
 	}
+	gTimerOn = false;
 }
 void resumeTimer()
 {
+//	if (gTimerOn)
+//	{
+//		return;
+//	}
 	if (sigprocmask(SIG_UNBLOCK, &gSigSet ,NULL) == FAILURE)
 	{
 		//error
 		exit(1);
 	}
+	gTimerOn = true;
 }
 
 /** Switches the running thread to be the next in the READY queue, if exist
@@ -58,6 +71,15 @@ void resumeTimer()
 void switchRunningThread()
 {
 	pauseTimer();
+	Thread* temp = gThreads.popElement();	// doubdted
+	if (temp == NULL)
+	{
+		gNumOfQuantums++;
+		gRunning->increaseQuantums();
+		resumeTimer();
+		return;
+	}
+	// else
 	gNumOfQuantums++;
 	if (sigsetjmp(env[uthread_get_tid()],1) != 0)
 	{
@@ -65,7 +87,7 @@ void switchRunningThread()
 		return;
 	}
 	gThreads.enqueueElement(gRunning);
-	gRunning = gThreads.popElement();
+	gRunning = temp;
 	gRunning->increaseQuantums();
 	cout << "switching  id:" <<uthread_get_tid() <<  endl;	////-----ERASE---------------------/
 	resumeTimer();
@@ -175,10 +197,30 @@ int uthread_init(int quantum_usecs)
 
 	cout << "\t\tcreated a Main thread" << endl;								////-----ERASE---------------------///
 	gRunning = main;
+
 	gRunning->increaseQuantums();
 	cout << "\t\tAssigned Main thread to be the running thread" << endl;		////-----ERASE---------------------///
+
+	  /* Set up the structure to specify the new action. */
+	 gAction.sa_handler = timer_handler;
+	 sigemptyset (&gAction.sa_mask);
+	 gAction.sa_flags = 0;
+	 if (sigemptyset(&gAction.sa_mask)== FAILURE)
+	 {
+	 cerr << SIGEMPTY_ERR << endl;
+	 exit(1);
+	 }
+	 gAction.sa_flags = 0;
+	 if (sigaction(SIGVTALRM, &gAction, NULL) == FAILURE)
+	 {
+	  cerr<< SIGACTION_ERR <<endl;
+	 exit(1);
+	 }
+
 	gTimer->set();
+	gTimerOn = true;
 	cout << "\t\ttimer was set" << endl;										////-----ERASE---------------------///
+	switchRunningThread();
 	if (sigemptyset(&gSigSet) == FAILURE)
 	{
 		cerr << SIGEMPTY_ERR << endl;
@@ -230,18 +272,22 @@ int uthread_terminate(int tid)
 		exit(0);
 	}
 	//Not found in queue
+	cout << "\tuthread_terminate calls removeElement(tid) with id: " << tid << "  requested by thread " << uthread_get_tid() << endl;		////-----ERASE---------------------///
 	if(!gThreads.removeElement(tid))
 	{
+		cout << "\t\tFailed remove element with id="<<tid << endl;							////-----ERASE---------------------///
 		if(tid == uthread_get_tid())
 		{
+			cout << "\t\t\tTerminating current id="<<tid << endl;							////-----ERASE---------------------///
 //			delete gMem[tid];			// Bring back if we turn gMem() into an array of pointers again
 			gHandler->removeId(tid);
-			terminateRunningThread();
 			delete gRunning;
+			terminateRunningThread();
 		}
 		//error
 		return FAILURE;
 	}
+	cout << "\t\t removed element!!!\n" << endl;							////-----ERASE---------------------///
 //	delete gMem[tid];				// Bring back if we turn gMem() into an array of pointers again
 	gHandler->removeId(tid);
 	return 0;
@@ -250,18 +296,26 @@ int uthread_terminate(int tid)
 /* Suspend a thread */
 int uthread_suspend(int tid)
 {
+	pauseTimer();
 	if (tid == 0)
 	{
 		//Error
+		resumeTimer();
 		return FAILURE;
 	}
 	// If the process is trying to block itself
 	if (uthread_get_tid() == tid)
 	{
 		// move the main block to the READY queue
+		resumeTimer();
 		switchRunningThread();
 	}
-	gThreads.block(tid);
+	else
+	{
+		cout << "\tuthread_suspend calls block(tid) with id: " << tid << "  requested by thread " << uthread_get_tid() << endl;		////-----ERASE---------------------///
+		gThreads.block(tid);
+	}
+	resumeTimer();
 	return 0;
 }
 
