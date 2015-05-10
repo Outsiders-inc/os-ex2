@@ -6,3 +6,5 @@ compiling the shit:
 -------------------
 g++ -Wall -std=c++11 IdHandler.h IdHandler.cpp Itimer.h Itimer.cpp PriorityQueue.h PriorityQueue.cpp Thread.h Thread.cpp uthreads.h uthreads.cpp moshe-test1.cpp -o ex2
 ex2
+Running ex4 test:
+g++ -Wall -std=c++11 test.cpp hash.h -L. -lhash -lcrypto -o test
